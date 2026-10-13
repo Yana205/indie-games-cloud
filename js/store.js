@@ -52,7 +52,16 @@
         headers: headers({ Prefer: "return=representation" }),
         body: JSON.stringify(row),
       });
-      if (!r.ok) throw new Error("Could not save: " + (await r.text()));
+      if (!r.ok) {
+        const text = await r.text();
+        // Database not upgraded for edit keys yet: save without one.
+        if (/edit_hash/.test(text) && row.edit_hash) {
+          const rest = Object.assign({}, row);
+          delete rest.edit_hash;
+          return add(rest);
+        }
+        throw new Error("Could not save: " + text);
+      }
       const out = await r.json();
       return out[0];
     }
@@ -63,5 +72,33 @@
     return saved;
   }
 
-  window.Store = { mode: remote ? "live" : "local", list, add };
+  async function rpc(name, args) {
+    const base = cfg.supabaseUrl.replace(/\/$/, "");
+    const r = await fetch(base + "/rest/v1/rpc/" + name, { method: "POST", headers: headers(), body: JSON.stringify(args) });
+    if (!r.ok) {
+      let msg = "";
+      try { msg = (await r.json()).message; } catch (e) {}
+      throw new Error(r.status === 403 || /edit key/i.test(msg) ? "This device doesn't have the edit key for that game." : msg || "Request failed (" + r.status + ")");
+    }
+    return r.json();
+  }
+
+  // Edit your own game. `token` is the private edit key kept on the creator's device.
+  async function update(id, token, data) {
+    if (remote) return rpc("update_project", { p_id: id, p_token: token, p_data: data });
+    const all = readLocal() || [];
+    const i = all.findIndex((p) => p.id === id);
+    if (i < 0) throw new Error("Game not found");
+    all[i] = Object.assign({}, all[i], data);
+    writeLocal(all);
+    return all[i];
+  }
+
+  async function remove(id, token) {
+    if (remote) return rpc("delete_project", { p_id: id, p_token: token });
+    writeLocal((readLocal() || []).filter((p) => p.id !== id));
+    return true;
+  }
+
+  window.Store = { mode: remote ? "live" : "local", list, add, update, remove };
 })();

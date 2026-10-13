@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261013-7">
+  <link rel="stylesheet" href="styles.css?v=20261013-9">
 </head>
 <body>
   <main id="stage" class="stage" aria-label="Project cloud"></main>
@@ -27,7 +27,7 @@
     </a>
     <button class="btn btn-primary" id="addBtn" type="button">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg>
-      Drop<span class="long"> your game</span>
+      Add<span class="long"> your game</span>
     </button>
   </header>
 
@@ -51,6 +51,10 @@
   </div>
 
   <footer class="bottom" id="bottom">
+    <button class="btn btn-primary fab" id="addFab" type="button">
+      <svg viewBox="0 0 16 16" aria-hidden="true" class="plus"><path d="M8 3v10M3 8h10"/></svg>
+      <span>Add your game<small>Drop it into the cloud</small></span>
+    </button>
     <nav class="chips" id="chips" aria-label="Filter games"></nav>
     <div class="tools">
       <label class="search">
@@ -162,9 +166,9 @@
   </dialog>
 
   <!-- Bump ?v= on every release so phones fetch fresh files instead of cached ones. -->
-  <script src="config.js?v=20261013-7"></script>
-  <script src="js/store.js?v=20261013-7"></script>
-  <script src="js/cloud.js?v=20261013-7"></script>
-  <script src="js/app.js?v=20261013-7"></script>
+  <script src="config.js?v=20261013-9"></script>
+  <script src="js/store.js?v=20261013-9"></script>
+  <script src="js/cloud.js?v=20261013-9"></script>
+  <script src="js/app.js?v=20261013-9"></script>
 </body>
 </html>

@@ -79,7 +79,11 @@
       const lay = layout(vis.length);
       const ids = new Set(vis.map((p) => p.id));
       for (const [id, k] of this.kids) {
-        if (!ids.has(id)) { k.remove(); this.kids.delete(id); }
+        if (!ids.has(id)) {
+          this.kids.delete(id);
+          k.classList.add("leaving");
+          setTimeout(() => k.remove(), 450);
+        }
       }
       vis.forEach((p, i) => {
         let k = this.kids.get(p.id);
@@ -108,8 +112,10 @@
       this.updateTarget();
     }
 
-    remove() {
-      this.el.remove();
+    remove(animate) {
+      if (!animate) return this.el.remove();
+      this.el.classList.add("leaving");
+      setTimeout(() => this.el.remove(), 500);
     }
   }
 
@@ -173,11 +179,19 @@
         seen.add(g.id);
       }
       for (const [id, node] of this.nodes) {
-        if (!seen.has(id)) { node.remove(); this.nodes.delete(id); }
+        if (!seen.has(id)) { node.remove(true); this.nodes.delete(id); }
       }
       this.started = true;
       this.refit();
       this.applyFilter();
+    }
+
+    // Drop the rendered bubbles for these projects so the next sync redraws them with new data.
+    invalidate(ids) {
+      const set = new Set(ids);
+      for (const n of this.nodes.values()) {
+        for (const [id, k] of n.kids) if (set.has(id)) { k.remove(); n.kids.delete(id); }
+      }
     }
 
     pendingIds() {

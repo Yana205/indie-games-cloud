@@ -62,6 +62,20 @@
     return "h" + hashStr(data).toString(16) + hashStr(data + "#").toString(16);
   }
   const buzz = () => { try { if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate(8); } catch (e) {} };
+  // ---------- edit keys ----------
+  // Each game gets a private edit key, kept on the creator's device. The database stores only its hash.
+  const MINE_KEY = "ccp.mine.v1";
+  const mine = () => load(MINE_KEY) || {};
+  const keyFor = (id) => mine()[id] || null;
+  const rememberKey = (id, token) => { const m = mine(); m[id] = token; save(MINE_KEY, m); };
+  const forgetKey = (id) => { const m = mine(); delete m[id]; save(MINE_KEY, m); };
+  const newToken = () => [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  const editLink = (id) => location.origin + location.pathname + "?edit=" + id + "." + keyFor(id);
+
   const load = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
@@ -251,6 +265,7 @@
     renderChips();
     renderStats();
     applyFilter();
+    if (typeof syncBottomH === "function") syncBottomH();
   }
 
   // ---------- tooltip ----------
@@ -359,6 +374,12 @@
     if (b) { e.preventDefault(); openProject(b.dataset.open); }
     const g = e.target.closest("[data-group]");
     if (g) { e.preventDefault(); openGroup(g.dataset.group); }
+    const ed = e.target.closest("[data-edit]");
+    if (ed) openForm(state.byId.get(ed.dataset.edit));
+    const cp = e.target.closest("[data-copy-edit]");
+    if (cp) copyEditLink(cp.dataset.copyEdit);
+    const del = e.target.closest("[data-delete]");
+    if (del) deleteGame(del.dataset.delete);
   });
 
   const thumbHTML = (p, cls) => {
@@ -408,6 +429,17 @@
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>` : ""}
         <span class="when">added ${esc(ago(p.created_at))}</span>
       </div>
+      ${keyFor(id) ? `<div class="owner">
+        <span>This is your game</span>
+        <div>
+          <button type="button" class="btn btn-ghost btn-sm" data-edit="${esc(id)}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3l7.5-7.5Z"/></svg>Edit</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-copy-edit="${esc(id)}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L7.6 4.2M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8A3 3 0 0 0 7.2 13l1.2-1.2"/></svg>Edit link</button>
+          <button type="button" class="btn btn-ghost btn-sm danger" data-delete="${esc(id)}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/></svg>Delete</button>
+        </div>
+      </div>` : ""}
       <h3>Made by</h3>
       ${g ? creatorBlock(g, others.length > 0) : ""}
       ${others.length ? `<h3>More from ${esc(g.name.split(" ")[0])}</h3><div class="minis">${others.map(card).join("")}</div>` : ""}
@@ -622,20 +654,45 @@
     wc.classList.toggle("ok", n >= 2);
   });
 
-  function openForm() {
+  let editing = null; // the game being edited, or null when adding
+
+  function openForm(edit) {
+    editing = edit && edit.id ? edit : null;
     form.reset();
     Object.assign(thumb, { mode: "link", link: null, upload: null, lastUrl: null, reqId: thumb.reqId + 1 });
     const me = load(ME_KEY) || {};
-    pick.status = null;
-    pick.genre = null;
-    pick.platforms = new Set(me.platforms || []);
-    form.creator_name.value = me.name || "";
-    form.email.value = me.email || "";
-    form.linkedin.value = me.linkedin || "";
+    if (editing) {
+      const p = editing;
+      form.title.value = p.title;
+      form.description.value = p.description;
+      form.url.value = p.url;
+      form.creator_name.value = p.creator_name;
+      form.email.value = "";
+      form.linkedin.value = p.linkedin || "";
+      pick.status = p.status || null;
+      pick.genre = p.genre || null;
+      pick.platforms = new Set(platformsOf(p));
+      if (/^data:/.test(p.thumbnail || "")) Object.assign(thumb, { mode: "upload", upload: p.thumbnail });
+      else Object.assign(thumb, { link: p.thumbnail || null, lastUrl: safeUrl(p.url) });
+      form.querySelector(`input[name="thumbMode"][value="${thumb.mode}"]`).checked = true;
+    } else {
+      pick.status = null;
+      pick.genre = null;
+      pick.platforms = new Set(me.platforms || []);
+      form.creator_name.value = me.name || "";
+      form.email.value = me.email || "";
+      form.linkedin.value = me.linkedin || "";
+    }
+    $("#addTitle").textContent = editing ? "Edit your game" : "Drop your game";
+    $("#submitBtn").textContent = editing ? "Save changes" : "Drop it in";
+    form.email.placeholder = editing ? "Leave empty to keep it as is" : "";
+    form.description.dispatchEvent(new Event("input"));
     $("#formErr").textContent = "";
-    $("#wordCount").textContent = "at least 2 words";
-    $("#wordCount").classList.remove("ok");
-    $("#thumbHint").textContent = "We grab the preview image from your link automatically.";
+    if (!editing) {
+      $("#wordCount").textContent = "at least 2 words";
+      $("#wordCount").classList.remove("ok");
+    }
+    $("#thumbHint").textContent = thumb.mode === "upload" ? "Click the bubble to swap the image." : "We grab the preview image from your link automatically.";
     status("");
     renderPickers();
     setPreview();
@@ -645,7 +702,7 @@
     // On phones, don't pop the keyboard up over the form right away.
     if (matchMedia("(hover: hover)").matches) form.title.focus();
   }
-  $("#addBtn").addEventListener("click", openForm);
+  $("#addBtn").addEventListener("click", () => openForm());
   dlg.addEventListener("close", sheetClosed);
   dlg.addEventListener("click", (e) => {
     if (e.target.closest("[data-close]") || e.target === dlg) dlg.close();
@@ -682,30 +739,44 @@
 
     const btn = $("#submitBtn");
     btn.disabled = true;
-    btn.textContent = "Dropping…";
+    btn.textContent = editing ? "Saving…" : "Dropping…";
     try {
       // If the link preview is still loading, give it a moment.
       if (thumb.mode === "link" && safeUrl(form.url.value) !== thumb.lastUrl) await fetchLinkThumb();
-      const row = await Store.add({
+      const data = {
         title,
         description,
         status: pick.status,
         platforms: (cfg.platforms || []).filter((x) => pick.platforms.has(x)).concat([...pick.platforms].filter((x) => !(cfg.platforms || []).includes(x))),
         genre: genre || null,
         creator_name: name,
-        creator_key: await emailKey(email),
         linkedin,
         url,
         thumbnail: (thumb.mode === "upload" ? thumb.upload : thumb.link) || null,
-      });
-      save(ME_KEY, { name, email, linkedin: liRaw, platforms: [...pick.platforms] });
-      dlg.close();
-      addAndDrop([row]);
+      };
+      if (editing) {
+        if (email) data.creator_key = await emailKey(email); // empty email keeps the current grouping
+        const row = await Store.update(editing.id, keyFor(editing.id), data);
+        dlg.close();
+        applyChanges([row], []);
+        openProject(row.id);
+        toast("Saved");
+      } else {
+        const token = newToken();
+        data.creator_key = await emailKey(email);
+        data.edit_hash = await sha256Hex(token);
+        const row = await Store.add(data);
+        rememberKey(row.id, token);
+        save(ME_KEY, { name, email, linkedin: liRaw, platforms: [...pick.platforms] });
+        dlg.close();
+        addAndDrop([row]);
+        setTimeout(() => toast("You can edit or delete it later from this device"), 2600);
+      }
     } catch (ex) {
       err(ex.message || "Something went wrong. Try again.");
     } finally {
       btn.disabled = false;
-      btn.textContent = "Drop it in";
+      btn.textContent = editing ? "Save changes" : "Drop it in";
     }
   });
 
@@ -720,6 +791,59 @@
     rows.forEach((r, i) => setTimeout(() => cloud.drop(r.id), 350 + i * 1700));
   }
 
+  // Update or remove games already in the cloud (own edits, or changes from other people).
+  function applyChanges(updated, removedIds) {
+    if (!updated.length && !removedIds.length) return;
+    const gone = new Set(removedIds);
+    const upd = new Map(updated.map((r) => [r.id, r]));
+    state.projects = state.projects.filter((p) => !gone.has(p.id)).map((p) => upd.get(p.id) || p);
+    rebuild();
+    cloud.invalidate([...upd.keys()]);
+    cloud.sync(state.groups, cloud.pendingIds());
+    refreshUI();
+  }
+
+  async function deleteGame(id) {
+    const p = state.byId.get(id);
+    if (!p || !confirm(`Delete "${p.title}" from the cloud? This can't be undone.`)) return;
+    try {
+      await Store.remove(id, keyFor(id));
+      forgetKey(id);
+      closeDrawer();
+      setTimeout(() => applyChanges([], [id]), 250);
+      toast("Deleted");
+    } catch (ex) {
+      toast(ex.message || "Couldn't delete it");
+    }
+  }
+
+  async function copyEditLink(id) {
+    const link = editLink(id);
+    try {
+      if (navigator.share && matchMedia("(hover: none)").matches) {
+        await navigator.share({ title: "Edit link", text: "Private link to edit your game in the Indie Games Cloud", url: link });
+        return;
+      }
+      await navigator.clipboard.writeText(link);
+      toast("Edit link copied. Keep it private.");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      prompt("Your private edit link:", link);
+    }
+  }
+
+  // Opening a private edit link (?edit=<id>.<key>) saves the key on this device.
+  function takeEditLink() {
+    const m = new URLSearchParams(location.search).get("edit");
+    if (!m) return null;
+    const [id, token] = m.split(".");
+    history.replaceState(null, "", location.pathname);
+    if (!id || !/^[0-9a-f]{20,}$/.test(token || "")) return null;
+    rememberKey(id, token);
+    save(WELCOME_KEY, 1);
+    return id;
+  }
+
   // ---------- boot ----------
   async function boot() {
     try {
@@ -728,20 +852,40 @@
       state.projects = [];
       toast(e.message);
     }
-    showWelcome();
+    const editId = takeEditLink();
+    if (!editId) showWelcome();
     rebuild();
     renderCredit();
     cloud.sync(state.groups);
     refreshUI();
+    if (editId) {
+      setTimeout(() => {
+        if (state.byId.has(editId)) { openProject(editId); toast("Edit key saved on this device"); }
+        else toast("That game isn't in the cloud anymore");
+      }, 900);
+    }
     if (Store.mode === "live") {
       setInterval(async () => {
         try {
           const all = await Store.list();
+          const ids = new Set(all.map((p) => p.id));
+          const changed = all.filter((p) => state.byId.has(p.id) && JSON.stringify(p) !== JSON.stringify(state.byId.get(p.id)));
+          const removed = state.projects.filter((p) => !ids.has(p.id) && !cloud.pendingIds().includes(p.id)).map((p) => p.id);
+          applyChanges(changed, removed);
           addAndDrop(all.filter((p) => !state.byId.has(p.id)));
         } catch (e) {}
       }, Math.max(5, cfg.pollSeconds || 20) * 1000);
     }
   }
+
+  let lastBottomH = 0;
+  const syncBottomH = () => {
+    const h = $("#bottom").offsetHeight;
+    document.documentElement.style.setProperty("--bottom-h", h + "px");
+    if (h !== lastBottomH) { lastBottomH = h; cloud.resize(); } // keep bubbles clear of the bottom bar
+  };
+  addEventListener("resize", syncBottomH);
+  syncBottomH();
 
   // ---------- first visit ----------
   const WELCOME_KEY = "ccp.welcomed.v1";
@@ -751,12 +895,14 @@
       if (dlg.open || drawerOpen()) return;
       $("#welcome").hidden = false;
       $("#addBtn").classList.add("beckon");
+      $("#addFab").classList.add("beckon");
     }, 1400);
   }
   function hideWelcome() {
-    if ($("#welcome").hidden && !$("#addBtn").classList.contains("beckon")) return;
+    if ($("#welcome").hidden && !$("#addFab").classList.contains("beckon")) return;
     save(WELCOME_KEY, 1);
     $("#addBtn").classList.remove("beckon");
+    $("#addFab").classList.remove("beckon");
     const w = $("#welcome");
     w.classList.add("leaving");
     setTimeout(() => { w.hidden = true; w.classList.remove("leaving"); }, 300);
@@ -764,6 +910,7 @@
   $("#welcomeDrop").addEventListener("click", () => { hideWelcome(); openForm(); });
   $("#welcomeSkip").addEventListener("click", hideWelcome);
   $("#addBtn").addEventListener("click", hideWelcome);
+  $("#addFab").addEventListener("click", () => { hideWelcome(); openForm(); });
   $("#stage").addEventListener("pointerdown", () => { if (!$("#welcome").hidden) hideWelcome(); });
 
   window.CCP = { cloud, state, toast };
