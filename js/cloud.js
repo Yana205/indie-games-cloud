@@ -100,7 +100,7 @@
       this.el.classList.toggle("is-empty", vis.length === 0);
       if (group) {
         this.labelB.textContent = this.group.name;
-        this.labelS.textContent = vis.length + " projects";
+        this.labelS.textContent = vis.length + " games";
       } else if (vis[0]) {
         this.labelB.textContent = vis[0].title;
         this.labelS.textContent = vis[0].creator_name;
@@ -238,6 +238,7 @@
         setTimeout(() => kid.classList.remove("enter"), 2000);
         setTimeout(() => kid.classList.remove("fresh"), 6000);
       }
+      if (navigator.vibrate && document.visibilityState === "visible" && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate([10, 50, 18]); } catch (e) {} }
       n.el.classList.remove("jelly");
       void n.el.offsetWidth;
       n.el.classList.add("jelly");
@@ -293,17 +294,22 @@
         const el = e.target.closest(".node");
         const node = el && this.nodes.get(el.dataset.id);
         if (!node || node.falling) return;
+        const kid = e.target.closest(".proj");
+        if (kid) kid.classList.add("pressed");
         drag = {
-          node, target: e.target, sx: e.clientX, sy: e.clientY,
+          node, target: e.target, kid, type: e.pointerType, t0: performance.now(), sx: e.clientX, sy: e.clientY,
           ox: node.x - e.clientX, oy: node.y - e.clientY,
           lx: e.clientX, ly: e.clientY, vx: 0, vy: 0, moved: false,
         };
-        st.setPointerCapture(e.pointerId);
+        try { st.setPointerCapture(e.pointerId); } catch (err) {}
       });
       st.addEventListener("pointermove", (e) => {
         if (!drag) return;
-        if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) {
+        // Fingers wobble, so touch needs a bigger dead zone before a tap becomes a drag.
+        const slop = drag.type === "mouse" ? 5 : 12;
+        if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > slop) {
           drag.moved = true;
+          if (drag.kid) drag.kid.classList.remove("pressed");
           drag.node.drag = true;
           drag.node.el.classList.add("dragging");
           if (this.opts.onDragStart) this.opts.onDragStart();
@@ -320,6 +326,14 @@
       const end = (e, cancelled) => {
         if (!drag) return;
         const { node } = drag;
+        if (drag.kid) drag.kid.classList.remove("pressed");
+        // A quick, short flick still counts as a tap.
+        const quick = performance.now() - drag.t0 < 220 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 24;
+        if (drag.moved && quick && !cancelled) {
+          node.drag = false;
+          node.el.classList.remove("dragging");
+          drag.moved = false;
+        }
         if (drag.moved) {
           node.drag = false;
           node.vx = drag.vx * 0.5;
@@ -355,6 +369,7 @@
       for (const n of nodes) {
         const target = now < n.holdUntil ? 0 : n.tr;
         n.r += (target - n.r) * Math.min(1, 0.028 * dt); // slow, soft growth
+        if (Math.abs(target - n.r) < 0.15) n.r = target;
         if (n.drag || n.falling) continue;
         n.vx += (this.cx - n.x) * 0.0007 * dt;
         n.vy += (this.cy - n.y) * 0.0013 * dt;
@@ -399,7 +414,11 @@
       for (const n of this.nodes.values()) {
         const r = Math.max(0, n.r);
         n.el.style.transform = `translate3d(${n.x - r}px, ${n.y - r}px, 0)`;
-        n.el.style.width = n.el.style.height = 2 * r + "px";
+        // Resizing forces layout, so only touch width/height when the size really changed.
+        if (n.drawnR === undefined || Math.abs(n.drawnR - r) > 0.25) {
+          n.drawnR = r;
+          n.el.style.width = n.el.style.height = 2 * r + "px";
+        }
         const tiny = r < 30;
         if (tiny !== n.tiny) { n.tiny = tiny; n.el.classList.toggle("tiny", tiny); }
       }

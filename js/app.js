@@ -56,6 +56,7 @@
     }
     return "h" + hashStr(data).toString(16) + hashStr(data + "#").toString(16);
   }
+  const buzz = () => { try { if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate(8); } catch (e) {} };
   const load = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
@@ -152,8 +153,8 @@
     renderProject,
     insetTop: () => $("#top").offsetHeight + 10,
     insetBottom: () => $("#bottom").offsetHeight + 10,
-    onProject: (id) => openProject(id),
-    onGroup: (gid) => openGroup(gid),
+    onProject: (id) => { buzz(); openProject(id); },
+    onGroup: (gid) => { buzz(); openGroup(gid); },
     onDragStart: () => hideTip(),
   });
 
@@ -269,22 +270,74 @@
 
   // ---------- drawer ----------
   const drawer = $("#drawer"), scrim = $("#scrim");
+  // Sheets (drawer + form) add one history entry, so the phone's Back button closes them.
+  const sheet = { pushed: false };
+  const drawerOpen = () => drawer.classList.contains("open");
+  function sheetOpened() {
+    if (!sheet.pushed) { history.pushState({ ccpSheet: 1 }, ""); sheet.pushed = true; }
+  }
+  function sheetClosed() {
+    if (sheet.pushed && !drawerOpen() && !dlg.open) { sheet.pushed = false; history.back(); }
+  }
+  addEventListener("popstate", () => {
+    if (!sheet.pushed) return;
+    sheet.pushed = false;
+    if (drawerOpen()) closeDrawer();
+    if (dlg.open) dlg.close();
+  });
+
   function openDrawer(html) {
     hideTip();
     $("#drawerBody").innerHTML = html;
     $("#drawerBody").scrollTop = 0;
+    drawer.style.transform = "";
     drawer.classList.add("open");
     scrim.classList.add("open");
     drawer.setAttribute("aria-hidden", "false");
-    $("#drawerClose").focus({ preventScroll: true });
+    drawer.openedAt = performance.now();
+    if (matchMedia("(hover: hover)").matches) $("#drawerClose").focus({ preventScroll: true });
+    sheetOpened();
   }
   function closeDrawer() {
+    if (!drawerOpen()) return;
     drawer.classList.remove("open");
     scrim.classList.remove("open");
     drawer.setAttribute("aria-hidden", "true");
+    drawer.style.transform = "";
+    sheetClosed();
   }
   $("#drawerClose").addEventListener("click", closeDrawer);
-  scrim.addEventListener("click", closeDrawer);
+  // On touch screens the browser sends a late "click" right after the tap that opened the
+  // drawer; it lands on the scrim, so ignore scrim taps for a moment after opening.
+  scrim.addEventListener("click", () => {
+    if (performance.now() - (drawer.openedAt || 0) > 450) closeDrawer();
+  });
+
+  // Swipe the sheet down to close it (phones).
+  (() => {
+    let s = null;
+    const grab = $("#drawerGrab");
+    grab.addEventListener("pointerdown", (e) => {
+      s = { y: e.clientY, t: performance.now(), dy: 0, id: e.pointerId };
+      try { grab.setPointerCapture(e.pointerId); } catch (err) {}
+      drawer.classList.add("dragging");
+    });
+    grab.addEventListener("pointermove", (e) => {
+      if (!s) return;
+      s.dy = Math.max(0, e.clientY - s.y);
+      drawer.style.transform = `translateY(${s.dy}px)`;
+    });
+    const end = () => {
+      if (!s) return;
+      const v = s.dy / Math.max(1, performance.now() - s.t);
+      drawer.classList.remove("dragging");
+      if (s.dy > 110 || (v > 0.5 && s.dy > 30)) closeDrawer();
+      else drawer.style.transform = "";
+      s = null;
+    };
+    grab.addEventListener("pointerup", end);
+    grab.addEventListener("pointercancel", end);
+  })();
   addEventListener("keydown", (e) => { if (e.key === "Escape" && drawer.classList.contains("open")) closeDrawer(); });
   $("#drawerBody").addEventListener("click", (e) => {
     const b = e.target.closest("[data-open]");
@@ -564,11 +617,14 @@
     status("");
     renderPickers();
     setPreview();
-    closeDrawer();
     dlg.showModal();
-    form.title.focus();
+    closeDrawer();
+    sheetOpened();
+    // On phones, don't pop the keyboard up over the form right away.
+    if (matchMedia("(hover: hover)").matches) form.title.focus();
   }
   $("#addBtn").addEventListener("click", openForm);
+  dlg.addEventListener("close", sheetClosed);
   dlg.addEventListener("click", (e) => {
     if (e.target.closest("[data-close]") || e.target === dlg) dlg.close();
   });
