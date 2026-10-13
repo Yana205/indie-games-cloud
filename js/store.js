@@ -9,14 +9,11 @@
     "id-" + Date.now().toString(36) + Math.random().toString(36).slice(2);
 
   function headers(extra) {
-    return Object.assign(
-      {
-        apikey: cfg.supabaseAnonKey,
-        Authorization: "Bearer " + cfg.supabaseAnonKey,
-        "Content-Type": "application/json",
-      },
-      extra
-    );
+    const h = { apikey: cfg.supabaseAnonKey, "Content-Type": "application/json" };
+    // Legacy anon keys are JWTs and also go in Authorization.
+    // New sb_publishable_ keys must only be sent as apikey.
+    if (/^eyJ/.test(cfg.supabaseAnonKey)) h.Authorization = "Bearer " + cfg.supabaseAnonKey;
+    return Object.assign(h, extra);
   }
 
   function readLocal() {

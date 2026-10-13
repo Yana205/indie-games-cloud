@@ -3,8 +3,9 @@
 // (projects are saved in the visitor's browser only).
 // Fill them in (see README) to make the cloud shared and live for everyone.
 window.APP_CONFIG = {
-  supabaseUrl: "",
-  supabaseAnonKey: "",
+  supabaseUrl: "https://ylkonkarqnlfaosjilcr.supabase.co",
+  // Publishable key (sb_publishable_...) or legacy anon key. Safe to be public.
+  supabaseAnonKey: "sb_publishable_ZhW0j_9mwGOhv3fZXoYZ3w_pb66_mU8",
 
   // Credit shown on the page.
   credit: {
