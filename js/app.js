@@ -846,18 +846,30 @@
 
   // ---------- boot ----------
   async function boot() {
+    renderCredit();
+    const editId = takeEditLink();
+    // Paint the cloud from last visit's copy right away, then catch up with the server.
+    const warm = Store.cached();
+    if (warm) {
+      state.projects = warm;
+      rebuild();
+      cloud.sync(state.groups);
+      refreshUI();
+    }
     try {
-      state.projects = await Store.list();
+      const all = await Store.list();
+      if (warm) reconcile(all);
+      else state.projects = all;
     } catch (e) {
-      state.projects = [];
+      if (!warm) state.projects = [];
       toast(e.message);
     }
-    const editId = takeEditLink();
+    if (!warm) {
+      rebuild();
+      cloud.sync(state.groups);
+      refreshUI();
+    }
     if (!editId) showWelcome();
-    rebuild();
-    renderCredit();
-    cloud.sync(state.groups);
-    refreshUI();
     if (editId) {
       setTimeout(() => {
         if (state.byId.has(editId)) { openProject(editId); toast("Edit key saved on this device"); }
@@ -866,16 +878,24 @@
     }
     if (Store.mode === "live") {
       setInterval(async () => {
-        try {
-          const all = await Store.list();
-          const ids = new Set(all.map((p) => p.id));
-          const changed = all.filter((p) => state.byId.has(p.id) && JSON.stringify(p) !== JSON.stringify(state.byId.get(p.id)));
-          const removed = state.projects.filter((p) => !ids.has(p.id) && !cloud.pendingIds().includes(p.id)).map((p) => p.id);
-          applyChanges(changed, removed);
-          addAndDrop(all.filter((p) => !state.byId.has(p.id)));
-        } catch (e) {}
+        try { reconcile(await Store.list()); } catch (e) {}
       }, Math.max(5, cfg.pollSeconds || 20) * 1000);
     }
+  }
+
+  // Bring the cloud in line with the server's list: update, remove, and drop in new games.
+  function reconcile(all) {
+    const ids = new Set(all.map((p) => p.id));
+    const changed = all.filter((p) => state.byId.has(p.id) && JSON.stringify(p) !== JSON.stringify(state.byId.get(p.id)));
+    const removed = state.projects.filter((p) => !ids.has(p.id) && !cloud.pendingIds().includes(p.id)).map((p) => p.id);
+    applyChanges(changed, removed);
+    const fresh = all.filter((p) => !state.byId.has(p.id));
+    if (fresh.length <= 3) return addAndDrop(fresh);
+    // A big batch (e.g. a long time since the last visit): add them all at once instead of one drop each.
+    state.projects.push(...fresh);
+    rebuild();
+    cloud.sync(state.groups, cloud.pendingIds());
+    refreshUI();
   }
 
   let lastBottomH = 0;
@@ -895,14 +915,12 @@
       if (dlg.open || drawerOpen()) return;
       $("#welcome").hidden = false;
       $("#addBtn").classList.add("beckon");
-      $("#addFab").classList.add("beckon");
     }, 1400);
   }
   function hideWelcome() {
-    if ($("#welcome").hidden && !$("#addFab").classList.contains("beckon")) return;
+    if ($("#welcome").hidden && !$("#addBtn").classList.contains("beckon")) return;
     save(WELCOME_KEY, 1);
     $("#addBtn").classList.remove("beckon");
-    $("#addFab").classList.remove("beckon");
     const w = $("#welcome");
     w.classList.add("leaving");
     setTimeout(() => { w.hidden = true; w.classList.remove("leaving"); }, 300);
@@ -910,7 +928,6 @@
   $("#welcomeDrop").addEventListener("click", () => { hideWelcome(); openForm(); });
   $("#welcomeSkip").addEventListener("click", hideWelcome);
   $("#addBtn").addEventListener("click", hideWelcome);
-  $("#addFab").addEventListener("click", () => { hideWelcome(); openForm(); });
   $("#stage").addEventListener("pointerdown", () => { if (!$("#welcome").hidden) hideWelcome(); });
 
   window.CCP = { cloud, state, toast };

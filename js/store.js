@@ -2,6 +2,7 @@
 (function () {
   const cfg = window.APP_CONFIG || {};
   const LS_KEY = "ccp.games.v1";
+  const CACHE_KEY = "ccp.cache.v1"; // last list seen from the server, for an instant first paint
   const remote = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
 
   const uid = () =>
@@ -32,16 +33,37 @@
     }
   }
 
+  async function fetchList() {
+    const base = cfg.supabaseUrl.replace(/\/$/, "");
+    const r = await fetch(base + "/rest/v1/projects?select=*&order=created_at.asc&limit=2000", {
+      headers: headers(),
+    });
+    if (!r.ok) throw new Error("Could not load projects (" + r.status + ")");
+    const data = await r.json();
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (e) {}
+    return data;
+  }
+
+  // Start the first request as soon as this file runs, before the rest of the page boots.
+  let first = remote ? fetchList() : null;
+  if (first) first.catch(() => {});
+
   async function list() {
     if (remote) {
-      const base = cfg.supabaseUrl.replace(/\/$/, "");
-      const r = await fetch(base + "/rest/v1/projects?select=*&order=created_at.asc&limit=2000", {
-        headers: headers(),
-      });
-      if (!r.ok) throw new Error("Could not load projects (" + r.status + ")");
-      return r.json();
+      const p = first || fetchList();
+      first = null;
+      return p;
     }
     return readLocal() || [];
+  }
+
+  // The list from the previous visit (live mode only), or null.
+  function cached() {
+    if (!remote) return null;
+    try {
+      const data = JSON.parse(localStorage.getItem(CACHE_KEY));
+      return Array.isArray(data) ? data : null;
+    } catch (e) { return null; }
   }
 
   async function add(row) {
@@ -100,5 +122,5 @@
     return true;
   }
 
-  window.Store = { mode: remote ? "live" : "local", list, add, update, remove };
+  window.Store = { mode: remote ? "live" : "local", list, cached, add, update, remove };
 })();
