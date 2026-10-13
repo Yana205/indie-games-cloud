@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Indie Games Cloud</title>
   <meta name="description" content="Games made by the Claude Code Community Meetup indie game developers. Drop yours in.">
@@ -11,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261013-4">
 </head>
 <body>
   <main id="stage" class="stage" aria-label="Project cloud"></main>
@@ -146,9 +147,10 @@
     </form>
   </dialog>
 
-  <script src="config.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/cloud.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Bump ?v= on every release so phones fetch fresh files instead of cached ones. -->
+  <script src="config.js?v=20261013-4"></script>
+  <script src="js/store.js?v=20261013-4"></script>
+  <script src="js/cloud.js?v=20261013-4"></script>
+  <script src="js/app.js?v=20261013-4"></script>
 </body>
 </html>

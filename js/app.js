@@ -313,6 +313,16 @@
     if (performance.now() - (drawer.openedAt || 0) > 450) closeDrawer();
   });
 
+  // Backup tap path: some phone browsers only deliver a plain click. If a click lands on a
+  // bubble and nothing opened from the pointer events, open it here.
+  $("#stage").addEventListener("click", (e) => {
+    if (drawerOpen() || performance.now() - (cloud.lastDragAt || 0) < 350) return;
+    const kid = e.target.closest && e.target.closest(".proj");
+    if (kid) return openProject(kid.dataset.pid);
+    const node = e.target.closest && e.target.closest(".node");
+    if (node) openGroup(node.dataset.id);
+  });
+
   // Swipe the sheet down to close it (phones).
   (() => {
     let s = null;

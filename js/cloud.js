@@ -335,6 +335,7 @@
           drag.moved = false;
         }
         if (drag.moved) {
+          this.lastDragAt = performance.now();
           node.drag = false;
           node.vx = drag.vx * 0.5;
           node.vy = drag.vy * 0.5;

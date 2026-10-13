@@ -264,7 +264,7 @@ svg.fill { fill: currentColor; stroke: none; }
 .drawer.dragging { transition: none; }
 .drawer-grab { display: none; }
 .drawer-close { position: absolute; top: 14px; right: 14px; z-index: 2; }
-.drawer-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 24px; }
+.drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 24px; }
 .drawer h2 { font: 400 34px/1.05 var(--serif); margin: 10px 0 8px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .drawer h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 600; margin: 28px 0 10px; }
 .desc { color: color-mix(in srgb, var(--ink) 82%, transparent); font-size: 15px; margin: 0 0 18px; overflow-wrap: anywhere; }
