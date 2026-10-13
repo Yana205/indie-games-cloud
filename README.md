@@ -2,7 +2,7 @@
 
 A single-page showcase for the **Claude Code Community Meetup · Indie Game Developers**. Devs drop their games into a floating cloud of bubbles.
 
-Created by Yana Ifraimov.
+Created by Yana Ifraimov. **Live:** https://yana205.github.io/indie-games-cloud/
 
 - **The cloud.** Each game is a bubble that drifts gently. You can drag and fling them.
 - **The drop.** When someone adds a game, a droplet falls into the cloud. It splashes, then the new bubble slowly grows and pushes the others aside.

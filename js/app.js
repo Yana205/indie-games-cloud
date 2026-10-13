@@ -428,7 +428,8 @@
   async function resolveThumb(url) {
     const itch = await itchInfo(url);
     if (itch && safeImg(itch.cover_image)) return { img: itch.cover_image, title: itch.title, tags: itch.tags || [] };
-    try {
+    // /api/preview only exists when hosted on Vercel; static hosts like GitHub Pages skip it.
+    if (!/\.github\.io$/.test(location.hostname) && location.protocol !== "file:") try {
       const r = await fetch("api/preview?url=" + encodeURIComponent(url));
       const j = r.ok && /json/.test(r.headers.get("content-type") || "") ? await r.json() : null;
       if (j && safeImg(j.image)) return { img: j.image, title: j.title, description: j.description };
