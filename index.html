@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261013-6">
+  <link rel="stylesheet" href="styles.css?v=20261013-7">
 </head>
 <body>
   <main id="stage" class="stage" aria-label="Project cloud"></main>
@@ -107,12 +107,12 @@
 
         <label class="field">
           <span class="field-label">Game title <b>*</b></span>
-          <input name="title" required maxlength="60" placeholder="e.g. Pixel Dungeon">
+          <input name="title" dir="auto" required maxlength="60" placeholder="e.g. Pixel Dungeon">
         </label>
 
         <label class="field">
           <span class="field-label">Short description <b>*</b> <small id="wordCount">at least 2 words</small></span>
-          <input name="description" required maxlength="140" placeholder="The game in one line">
+          <input name="description" dir="auto" required maxlength="140" placeholder="The game in one line">
         </label>
 
         <label class="field">
@@ -147,8 +147,8 @@
             <input name="email" type="email" maxlength="120" autocomplete="email">
           </label>
           <label class="field">
-            <span class="field-label">LinkedIn <small>optional · for networking</small></span>
-            <input name="linkedin" maxlength="200" placeholder="linkedin.com/in/you">
+            <span class="field-label">LinkedIn or link <small>optional · LinkedIn, Linktree or portfolio, for networking</small></span>
+            <input name="linkedin" maxlength="200" inputmode="url" placeholder="linkedin.com/in/you">
           </label>
         </fieldset>
       </div>
@@ -162,9 +162,9 @@
   </dialog>
 
   <!-- Bump ?v= on every release so phones fetch fresh files instead of cached ones. -->
-  <script src="config.js?v=20261013-6"></script>
-  <script src="js/store.js?v=20261013-6"></script>
-  <script src="js/cloud.js?v=20261013-6"></script>
-  <script src="js/app.js?v=20261013-6"></script>
+  <script src="config.js?v=20261013-7"></script>
+  <script src="js/store.js?v=20261013-7"></script>
+  <script src="js/cloud.js?v=20261013-7"></script>
+  <script src="js/app.js?v=20261013-7"></script>
 </body>
 </html>

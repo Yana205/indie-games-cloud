@@ -15,7 +15,8 @@ create table if not exists public.projects (
   creator_name  text not null check (char_length(creator_name) between 1 and 60),
   -- SHA-256 of the email (hashed in the browser). The raw email is never stored.
   creator_key   text check (creator_key is null or creator_key ~ '^[a-z0-9]{8,64}$'),
-  linkedin      text check (linkedin is null or linkedin ~* '^https://([a-z0-9-]+\.)?linkedin\.com/'),
+  -- Profile link for networking: LinkedIn, Linktree, portfolio...
+  linkedin      text check (linkedin is null or (linkedin ~* '^https://' and char_length(linkedin) <= 300)),
   url           text not null check (url ~* '^https?://' and char_length(url) <= 500),
   -- Either an https image URL or a small uploaded image (data URL, ~50 KB).
   thumbnail     text check (

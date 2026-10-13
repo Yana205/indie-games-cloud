@@ -58,7 +58,7 @@
       const el = (this.el = document.createElement("div"));
       el.className = "node";
       el.dataset.id = this.id;
-      el.innerHTML = '<div class="ring"></div><div class="kids"></div><div class="label"><b></b><span></span></div>';
+      el.innerHTML = '<div class="ring"></div><div class="kids"></div><div class="label"><b dir="auto"></b><span dir="auto"></span></div>';
       this.kidsEl = el.querySelector(".kids");
       this.labelB = el.querySelector(".label b");
       this.labelS = el.querySelector(".label span");

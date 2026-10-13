@@ -32,6 +32,11 @@
   };
   const safeImg = (u) =>
     typeof u === "string" && (/^https:\/\//.test(u) || /^data:image\/(png|jpe?g|webp|gif);base64,/.test(u)) ? u : null;
+  // Any https profile link: LinkedIn, Linktree, portfolio, studio site.
+  const safeProfile = (u) => {
+    const s = safeUrl(u);
+    return s ? s.replace(/^http:/, "https:") : null;
+  };
   const safeLinkedIn = (u) => {
     const s = safeUrl(u);
     return s && /^https?:\/\/([a-z0-9-]+\.)?linkedin\.com\//i.test(s) ? s.replace(/^http:/, "https:") : null;
@@ -109,7 +114,7 @@
       const tally = new Map();
       for (const p of rev) tally.set(p.creator_name, (tally.get(p.creator_name) || 0) + 1);
       g.name = rev.map((p) => p.creator_name).reduce((best, n) => (tally.get(n) > tally.get(best) ? n : best));
-      g.linkedin = rev.map((p) => safeLinkedIn(p.linkedin)).find(Boolean) || null;
+      g.linkedin = rev.map((p) => safeProfile(p.linkedin)).find(Boolean) || null;
       return g;
     });
   }
@@ -258,7 +263,7 @@
     const p = state.byId.get(kid.dataset.pid);
     if (!p) return hideTip();
     const meta = [p.status, p.genre, platformsOf(p).join(", ")].filter(Boolean).join(" · ");
-    tip.innerHTML = `<b>${esc(p.title)}</b><span>${esc(p.description)}</span>${meta ? `<em style="--h:${statusHue(p.status)}">${esc(meta)}</em>` : ""}`;
+    tip.innerHTML = `<b dir="auto">${esc(p.title)}</b><span dir="auto">${esc(p.description)}</span>${meta ? `<em style="--h:${statusHue(p.status)}">${esc(meta)}</em>` : ""}`;
     tip.hidden = false;
   });
   $("#stage").addEventListener("pointermove", (e) => {
@@ -361,19 +366,26 @@
     return `<div class="${cls}" style="--h:${statusHue(p.status)}"><span class="art" style="background:${art(p.title + p.id)}"><span>${esc(initials(p.title))}</span></span>` +
       (src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">` : "") + `</div>`;
   };
-  const linkedinBtn = (url) =>
-    url ? `<a class="btn btn-ghost btn-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer">
-      <svg viewBox="0 0 16 16" aria-hidden="true" class="fill"><path d="M3.6 5.8h-2v8.6h2V5.8ZM2.6 1.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm11.8 7.6c0-2.3-1.2-3.5-3-3.5-1.3 0-2 .7-2.3 1.2v-1h-2v8.6h2V10c0-1.2.3-2.3 1.7-2.3s1.6 1.3 1.6 2.4v4.3h2V9.2Z"/></svg>
-      Connect on LinkedIn</a>` : "";
+  const LINKEDIN_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true" class="fill"><path d="M3.6 5.8h-2v8.6h2V5.8ZM2.6 1.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm11.8 7.6c0-2.3-1.2-3.5-3-3.5-1.3 0-2 .7-2.3 1.2v-1h-2v8.6h2V10c0-1.2.3-2.3 1.7-2.3s1.6 1.3 1.6 2.4v4.3h2V9.2Z"/></svg>';
+  const LINK_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L7.6 4.2M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8A3 3 0 0 0 7.2 13l1.2-1.2"/></svg>';
+  // Button for a creator's profile link, labelled by where it goes.
+  const profileBtn = (url) => {
+    if (!url) return "";
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    const [icon, label] = /(^|\.)linkedin\.com$/.test(host) ? [LINKEDIN_SVG, "Connect on LinkedIn"]
+      : /^linktr\.ee$/.test(host) ? [LINK_SVG, "Linktree"]
+      : [LINK_SVG, host];
+    return `<a class="btn btn-ghost btn-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${icon}${esc(label)}</a>`;
+  };
   const card = (p) =>
-    `<a class="mini" href="#" data-open="${esc(p.id)}">${thumbHTML(p, "mini-thumb")}<span><b>${esc(p.title)}</b><small>${esc(p.description)}</small></span></a>`;
+    `<a class="mini" href="#" data-open="${esc(p.id)}">${thumbHTML(p, "mini-thumb")}<span><b dir="auto">${esc(p.title)}</b><small dir="auto">${esc(p.description)}</small></span></a>`;
 
   function creatorBlock(g, current) {
     return `<div class="creator">
       <div class="avatar" style="background:${art(g.name)}">${esc(initials(g.name))}</div>
-      <div><b>${esc(g.name)}</b><small>${g.projects.length} game${g.projects.length === 1 ? "" : "s"} in the cloud</small></div>
+      <div><b dir="auto">${esc(g.name)}</b><small>${g.projects.length} game${g.projects.length === 1 ? "" : "s"} in the cloud</small></div>
       ${current ? `<a href="#" class="link-sm" data-group="${esc(g.id)}">View all</a>` : ""}
-    </div>${linkedinBtn(g.linkedin)}`;
+    </div>${profileBtn(g.linkedin)}`;
   }
 
   function openProject(id) {
@@ -389,8 +401,8 @@
         ${p.genre ? `<span class="cat" style="--h:${hue(p.genre)}"><i class="sq"></i>${esc(p.genre)}</span>` : ""}
         ${platformsOf(p).map((x) => `<span class="cat plat">${platformIcon(x)}${esc(x)}</span>`).join("")}
       </div>
-      <h2>${esc(p.title)}</h2>
-      <p class="desc">${esc(p.description)}</p>
+      <h2 dir="auto">${esc(p.title)}</h2>
+      <p class="desc" dir="auto">${esc(p.description)}</p>
       <div class="row">
         ${url ? `<a class="btn btn-primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${p.status === "Released" ? "Play" : "Open"} game
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>` : ""}
@@ -651,7 +663,7 @@
     const name = form.creator_name.value.trim().replace(/\s+/g, " ");
     const email = form.email.value.trim();
     const liRaw = form.linkedin.value.trim();
-    const linkedin = liRaw ? safeLinkedIn(liRaw) : null;
+    const linkedin = liRaw ? safeProfile(liRaw) : null;
     let genre = pick.genre === "__new" ? form.newGenre.value.trim().replace(/\s+/g, " ") : pick.genre;
 
     if (!title) return err("Give your project a title.", form.title);
@@ -661,7 +673,7 @@
     if (pick.genre === "__new" && !genre) return err("Name the new genre, or pick one.", form.newGenre);
     if (!name) return err("Add your full name.", form.creator_name);
     if (email && !form.email.checkValidity()) return err("That email doesn't look right.", form.email);
-    if (liRaw && !linkedin) return err("Use a linkedin.com link for LinkedIn.", form.linkedin);
+    if (liRaw && !linkedin) return err("That profile link doesn't look right.", form.linkedin);
     if (genre) {
       // Reuse an existing genre if only the casing differs.
       const match = (cfg.genres || []).concat(genres()).find((g) => g.toLowerCase() === genre.toLowerCase());
