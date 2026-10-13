@@ -10,7 +10,7 @@ window.APP_CONFIG = {
   // Credit shown on the page.
   credit: {
     name: "Yana Ifraimov",
-    linkedin: "", // e.g. "https://www.linkedin.com/in/your-handle"
+    linkedin: "https://www.linkedin.com/in/yana-ifraimov/",
     event: "Claude Code Community Meetup · Indie Game Developers",
   },
 
