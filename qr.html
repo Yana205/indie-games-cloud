@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indie Games Cloud QR</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Printable A4 poster. Print with "Background graphics" on for the soft bubbles. */
+    @page { size: A4; margin: 0; }
+    :root { --ink: #1d1915; --muted: #6d655b; --accent: #d97757; --accent-2: #f0b294; --paper: #fffdf9; --line: #eadfd3; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #e9e3da; color: var(--ink); font-family: "Inter", system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .sheet {
+      position: relative; overflow: hidden; width: 210mm; height: 297mm; margin: 24px auto;
+      background: var(--paper); box-shadow: 0 20px 60px rgba(60, 40, 20, 0.18);
+      display: flex; flex-direction: column; align-items: center; text-align: center; padding: 22mm 20mm 16mm;
+    }
+    .bubble { position: absolute; border-radius: 50%; pointer-events: none; }
+    .b1 { width: 92mm; height: 92mm; left: -30mm; top: -26mm; background: radial-gradient(circle at 35% 30%, #fbe3d6, #f4c3aa 70%); opacity: .55; }
+    .b2 { width: 46mm; height: 46mm; right: -12mm; top: 30mm; background: radial-gradient(circle at 35% 30%, #fde9de, #f0b294 75%); opacity: .5; }
+    .b3 { width: 70mm; height: 70mm; right: -24mm; bottom: -20mm; background: radial-gradient(circle at 35% 30%, #fbe3d6, #e8a07f 75%); opacity: .4; }
+    .b4 { width: 18mm; height: 18mm; left: 18mm; bottom: 46mm; background: radial-gradient(circle at 35% 30%, #fff, #f0b294 80%); opacity: .55; }
+    .b5 { width: 10mm; height: 10mm; right: 36mm; top: 92mm; background: radial-gradient(circle at 35% 30%, #fff, #e8a07f 80%); opacity: .6; }
+    .content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; height: 100%; width: 100%; }
+    .brand { display: flex; align-items: center; gap: 4mm; }
+    .brand svg { width: 13mm; height: 13mm; }
+    .eyebrow { font-size: 10.5pt; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+    h1 { margin: 6mm 0 0; font: 400 64pt/0.9 "Instrument Serif", Georgia, serif; letter-spacing: -0.01em; }
+    h1 em { color: var(--accent); }
+    .tagline { margin: 6mm 0 0; font: italic 400 22pt/1.15 "Instrument Serif", Georgia, serif; color: var(--ink); }
+    .qr-wrap {
+      position: relative; margin-top: 12mm; padding: 9mm; border-radius: 12mm;
+      background: #fff; border: 1.2mm solid var(--accent); box-shadow: 0 10mm 24mm rgba(217, 119, 87, 0.22);
+    }
+    .qr-code { display: block; width: 92mm; height: 92mm; }
+    .drop {
+      position: absolute; top: -9mm; left: 50%; width: 16mm; height: 16mm; margin-left: -8mm;
+      display: grid; place-items: center; border-radius: 50%; background: var(--accent); border: 1.4mm solid var(--paper);
+    }
+    .drop svg { width: 7mm; height: 7mm; fill: #fff; }
+    .steps { display: flex; gap: 6mm; margin-top: 13mm; }
+    .step { width: 50mm; display: flex; flex-direction: column; align-items: center; gap: 2.5mm; }
+    .step b {
+      display: grid; place-items: center; width: 10mm; height: 10mm; border-radius: 50%;
+      background: var(--ink); color: var(--paper); font-size: 12pt; font-weight: 600;
+    }
+    .step span { font-size: 12.5pt; line-height: 1.3; font-weight: 500; }
+    .step small { display: block; color: var(--muted); font-weight: 400; font-size: 10.5pt; }
+    .url { margin-top: auto; font-size: 13pt; font-weight: 600; letter-spacing: .01em; }
+    .url span { color: var(--accent); }
+    .credit { margin-top: 3mm; font-size: 9.5pt; color: var(--muted); }
+    @media print {
+      html, body { background: none; }
+      .sheet { margin: 0; box-shadow: none; }
+    }
+    @media screen and (max-width: 840px) {
+      .sheet { transform-origin: top left; zoom: calc(100vw / 840px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <i class="bubble b1"></i><i class="bubble b2"></i><i class="bubble b3"></i><i class="bubble b4"></i><i class="bubble b5"></i>
+    <div class="content">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="18" r="9" fill="#d97757"/><circle cx="23" cy="11" r="6" fill="#f0b294"/><circle cx="24" cy="24" r="4" fill="#f0b294" opacity=".6"/></svg>
+        <span class="eyebrow">Claude Code Community Meetup · Indie Game Developers</span>
+      </div>
+      <h1>games <em>cloud</em></h1>
+      <p class="tagline">Made a game? Drop it into the cloud.</p>
+
+      <div class="qr-wrap">
+        <span class="drop"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg></span>
+        <svg class="qr-code" role="img" aria-label="QR code to yana205.github.io/indie-games-cloud" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><path fill="#1d1915" d="M0 0h7v1h-7zM8 0h4v1h-4zM15 0h5v1h-5zM23 0h2v1h-2zM26 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM9 1h1v1h-1zM13 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h2v1h-2zM26 1h1v1h-1zM32 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM8 2h3v1h-3zM12 2h2v1h-2zM16 2h1v1h-1zM18 2h1v1h-1zM20 2h1v1h-1zM24 2h1v1h-1zM26 2h1v1h-1zM28 2h3v1h-3zM32 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h1v1h-1zM10 3h1v1h-1zM15 3h5v1h-5zM23 3h2v1h-2zM26 3h1v1h-1zM28 3h3v1h-3zM32 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM15 4h1v1h-1zM18 4h3v1h-3zM23 4h1v1h-1zM26 4h1v1h-1zM28 4h3v1h-3zM32 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM15 5h3v1h-3zM19 5h1v1h-1zM21 5h1v1h-1zM24 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h7v1h-7zM8 7h1v1h-1zM10 7h2v1h-2zM15 7h3v1h-3zM19 7h6v1h-6zM1 8h1v1h-1zM3 8h1v1h-1zM5 8h4v1h-4zM10 8h1v1h-1zM14 8h2v1h-2zM18 8h6v1h-6zM25 8h3v1h-3zM29 8h2v1h-2zM32 8h1v1h-1zM1 9h1v1h-1zM10 9h2v1h-2zM15 9h1v1h-1zM17 9h1v1h-1zM20 9h1v1h-1zM22 9h1v1h-1zM25 9h3v1h-3zM31 9h2v1h-2zM1 10h2v1h-2zM4 10h1v1h-1zM6 10h1v1h-1zM9 10h3v1h-3zM15 10h1v1h-1zM18 10h3v1h-3zM22 10h1v1h-1zM26 10h3v1h-3zM30 10h3v1h-3zM1 11h4v1h-4zM8 11h1v1h-1zM10 11h2v1h-2zM16 11h1v1h-1zM18 11h5v1h-5zM26 11h1v1h-1zM28 11h2v1h-2zM0 12h3v1h-3zM5 12h2v1h-2zM10 12h2v1h-2zM14 12h1v1h-1zM18 12h4v1h-4zM24 12h1v1h-1zM26 12h1v1h-1zM29 12h1v1h-1zM31 12h1v1h-1zM0 13h3v1h-3zM8 13h2v1h-2zM11 13h3v1h-3zM15 13h1v1h-1zM17 13h3v1h-3zM21 13h2v1h-2zM24 13h1v1h-1zM26 13h1v1h-1zM28 13h1v1h-1zM30 13h3v1h-3zM0 14h1v1h-1zM3 14h1v1h-1zM6 14h1v1h-1zM9 14h1v1h-1zM11 14h1v1h-1zM13 14h1v1h-1zM15 14h4v1h-4zM23 14h1v1h-1zM25 14h4v1h-4zM31 14h1v1h-1zM2 15h1v1h-1zM4 15h1v1h-1zM9 15h1v1h-1zM12 15h1v1h-1zM14 15h1v1h-1zM16 15h1v1h-1zM19 15h6v1h-6zM26 15h3v1h-3zM31 15h1v1h-1zM2 16h2v1h-2zM5 16h3v1h-3zM10 16h1v1h-1zM13 16h1v1h-1zM15 16h1v1h-1zM17 16h5v1h-5zM23 16h2v1h-2zM26 16h1v1h-1zM28 16h1v1h-1zM31 16h1v1h-1zM0 17h4v1h-4zM8 17h1v1h-1zM11 17h3v1h-3zM15 17h1v1h-1zM18 17h1v1h-1zM21 17h1v1h-1zM23 17h2v1h-2zM27 17h1v1h-1zM29 17h1v1h-1zM31 17h1v1h-1zM1 18h2v1h-2zM4 18h3v1h-3zM8 18h1v1h-1zM12 18h2v1h-2zM15 18h1v1h-1zM18 18h1v1h-1zM20 18h3v1h-3zM24 18h2v1h-2zM30 18h3v1h-3zM1 19h1v1h-1zM3 19h2v1h-2zM10 19h3v1h-3zM14 19h2v1h-2zM20 19h2v1h-2zM24 19h2v1h-2zM27 19h1v1h-1zM31 19h1v1h-1zM2 20h3v1h-3zM6 20h2v1h-2zM9 20h2v1h-2zM14 20h1v1h-1zM16 20h1v1h-1zM21 20h1v1h-1zM24 20h2v1h-2zM32 20h1v1h-1zM1 21h1v1h-1zM4 21h1v1h-1zM7 21h3v1h-3zM11 21h3v1h-3zM15 21h1v1h-1zM18 21h1v1h-1zM20 21h1v1h-1zM24 21h3v1h-3zM29 21h4v1h-4zM0 22h4v1h-4zM5 22h5v1h-5zM11 22h3v1h-3zM15 22h1v1h-1zM18 22h2v1h-2zM21 22h2v1h-2zM25 22h1v1h-1zM29 22h2v1h-2zM32 22h1v1h-1zM1 23h1v1h-1zM4 23h2v1h-2zM7 23h3v1h-3zM12 23h4v1h-4zM17 23h1v1h-1zM19 23h1v1h-1zM21 23h1v1h-1zM26 23h1v1h-1zM29 23h1v1h-1zM31 23h2v1h-2zM0 24h1v1h-1zM2 24h1v1h-1zM6 24h2v1h-2zM9 24h1v1h-1zM12 24h2v1h-2zM21 24h1v1h-1zM24 24h5v1h-5zM31 24h1v1h-1zM8 25h1v1h-1zM11 25h3v1h-3zM16 25h1v1h-1zM18 25h3v1h-3zM22 25h3v1h-3zM28 25h2v1h-2zM32 25h1v1h-1zM0 26h7v1h-7zM8 26h1v1h-1zM10 26h3v1h-3zM17 26h1v1h-1zM20 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h4v1h-4zM0 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h5v1h-5zM17 27h1v1h-1zM19 27h1v1h-1zM21 27h1v1h-1zM24 27h1v1h-1zM28 27h1v1h-1zM31 27h2v1h-2zM0 28h1v1h-1zM2 28h3v1h-3zM6 28h1v1h-1zM9 28h1v1h-1zM11 28h1v1h-1zM16 28h1v1h-1zM18 28h1v1h-1zM21 28h2v1h-2zM24 28h6v1h-6zM0 29h1v1h-1zM2 29h3v1h-3zM6 29h1v1h-1zM8 29h1v1h-1zM11 29h1v1h-1zM13 29h4v1h-4zM18 29h1v1h-1zM21 29h1v1h-1zM23 29h1v1h-1zM26 29h1v1h-1zM28 29h4v1h-4zM0 30h1v1h-1zM2 30h3v1h-3zM6 30h1v1h-1zM9 30h1v1h-1zM11 30h4v1h-4zM16 30h1v1h-1zM21 30h1v1h-1zM24 30h1v1h-1zM28 30h1v1h-1zM32 30h1v1h-1zM0 31h1v1h-1zM6 31h1v1h-1zM8 31h2v1h-2zM12 31h2v1h-2zM16 31h1v1h-1zM19 31h3v1h-3zM23 31h3v1h-3zM0 32h7v1h-7zM9 32h1v1h-1zM11 32h1v1h-1zM16 32h4v1h-4zM21 32h1v1h-1zM24 32h3v1h-3zM28 32h2v1h-2zM31 32h1v1h-1z"/></svg>
+
+      </div>
+
+      <div class="steps">
+        <div class="step"><b>1</b><span>Scan the code<small>with your phone camera</small></span></div>
+        <div class="step"><b>2</b><span>Tap “Add your game”<small>paste your itch.io or store link</small></span></div>
+        <div class="step"><b>3</b><span>Watch it drop in<small>and meet the other devs</small></span></div>
+      </div>
+
+      <p class="url">yana205.github.io/<span>indie-games-cloud</span></p>
+      <p class="credit">Created by Yana Ifraimov</p>
+    </div>
+  </main>
+</body>
+</html>
