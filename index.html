@@ -11,8 +11,12 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='18' r='9' fill='%23d97757'/%3E%3Ccircle cx='23' cy='11' r='6' fill='%23e8a07f'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23f3c9b3'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261013-9">
+  <link rel="preconnect" href="https://ylkonkarqnlfaosjilcr.supabase.co" crossorigin>
+  <link rel="preconnect" href="https://img.itch.zone">
+  <!-- Fonts load without blocking the first paint; system fonts show until they arrive. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap"></noscript>
+  <link rel="stylesheet" href="styles.css?v=20261013-10">
 </head>
 <body>
   <main id="stage" class="stage" aria-label="Project cloud"></main>
@@ -21,13 +25,13 @@
     <a class="brand" href="./" aria-label="Indie Games Cloud home">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="18" r="9"/><circle cx="23" cy="11" r="6"/><circle cx="24" cy="24" r="4"/></svg>
       <span>
-        <small>Claude Code Meetup · Indie Game Devs</small>
+        <small>Claude Code Meetup<span class="eyebrow-long"> · Indie Game Devs</span></small>
         <strong>games <em>cloud</em></strong>
       </span>
     </a>
-    <button class="btn btn-primary" id="addBtn" type="button">
-      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg>
-      Add<span class="long"> your game</span>
+    <button class="btn btn-primary drop-btn" id="addBtn" type="button" aria-label="Drop your game">
+      <svg viewBox="0 0 16 16" aria-hidden="true" class="drip"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg>
+      <span>Drop<span class="long"> your game</span></span>
     </button>
   </header>
 
@@ -51,10 +55,6 @@
   </div>
 
   <footer class="bottom" id="bottom">
-    <button class="btn btn-primary fab" id="addFab" type="button">
-      <svg viewBox="0 0 16 16" aria-hidden="true" class="plus"><path d="M8 3v10M3 8h10"/></svg>
-      <span>Add your game<small>Drop it into the cloud</small></span>
-    </button>
     <nav class="chips" id="chips" aria-label="Filter games"></nav>
     <div class="tools">
       <label class="search">
@@ -166,9 +166,9 @@
   </dialog>
 
   <!-- Bump ?v= on every release so phones fetch fresh files instead of cached ones. -->
-  <script src="config.js?v=20261013-9"></script>
-  <script src="js/store.js?v=20261013-9"></script>
-  <script src="js/cloud.js?v=20261013-9"></script>
-  <script src="js/app.js?v=20261013-9"></script>
+  <script src="config.js?v=20261013-10"></script>
+  <script src="js/store.js?v=20261013-10"></script>
+  <script src="js/cloud.js?v=20261013-10"></script>
+  <script src="js/app.js?v=20261013-10"></script>
 </body>
 </html>

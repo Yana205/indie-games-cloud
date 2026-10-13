@@ -153,9 +153,11 @@
         const k = sizeFor(Math.max(1, n.group.projects.length));
         area += Math.PI * k * k;
       }
-      const usable = this.W * Math.max(200, this.H - this.top - this.bottom) * 0.3;
+      // Phones get a sparser cloud and a lower size cap, so bubbles stay small and easy to tell apart.
+      const phone = this.W < 600;
+      const usable = this.W * Math.max(200, this.H - this.top - this.bottom) * (phone ? 0.16 : 0.3);
       const px = area ? Math.sqrt(usable / area) : this.base;
-      this.scale = Math.max(0.3, Math.min(1.3, px / this.base));
+      this.scale = Math.max(0.3, Math.min(phone ? 0.72 : 1.3, px / this.base));
       for (const n of this.nodes.values()) n.updateTarget();
     }
 
@@ -171,7 +173,7 @@
         if (!node) {
           node = new Node(this, g);
           this.nodes.set(g.id, node);
-          if (!this.started) node.holdUntil = now + 250 + i++ * 85; // staggered intro
+          if (!this.started) { node.holdUntil = now + 40 + i++ * 45; node.grow = 0.11; } // quick staggered intro
         }
         node.group = g;
         for (const p of g.projects) if (pend.has(p.id)) node.pending.add(p.id);
@@ -380,14 +382,18 @@
 
     step(now, dt) {
       const nodes = [...this.nodes.values()];
-      const gap = 30 * Math.max(0.6, Math.min(1, this.scale));
+      // Phones keep the full gap so the title/creator labels under small bubbles don't collide.
+      const gap = this.W < 600 ? 30 : 30 * Math.max(0.6, Math.min(1, this.scale));
+      // Pull harder along the short side, so a tall phone screen spreads the cloud top to bottom.
+      const tall = this.H - this.top - this.bottom > this.W;
+      const kx = tall ? 0.0013 : 0.0007, ky = tall ? 0.0007 : 0.0013;
       for (const n of nodes) {
         const target = now < n.holdUntil ? 0 : n.tr;
-        n.r += (target - n.r) * Math.min(1, 0.028 * dt); // slow, soft growth
-        if (Math.abs(target - n.r) < 0.15) n.r = target;
+        n.r += (target - n.r) * Math.min(1, (n.grow || 0.028) * dt); // slow, soft growth (snappier on first load)
+        if (Math.abs(target - n.r) < 0.15) { n.r = target; if (target) n.grow = 0; }
         if (n.drag || n.falling) continue;
-        n.vx += (this.cx - n.x) * 0.0007 * dt;
-        n.vy += (this.cy - n.y) * 0.0013 * dt;
+        n.vx += (this.cx - n.x) * kx * dt;
+        n.vy += (this.cy - n.y) * ky * dt;
         n.vx += Math.sin(now * 0.00045 + n.ph) * 0.009 * dt;
         n.vy += Math.cos(now * 0.00037 + n.ph * 1.7) * 0.009 * dt;
       }
