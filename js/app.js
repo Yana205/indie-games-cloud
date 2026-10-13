@@ -60,7 +60,22 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
   // ---------- state ----------
-  const state = { projects: [], groups: [], byId: new Map(), groupOf: new Map(), cat: "all", q: "" };
+  const state = { projects: [], groups: [], byId: new Map(), groupOf: new Map(), status: null, platform: null, genre: null, q: "" };
+
+  // ---------- game fields ----------
+  const STATUS_HUE = { Released: 145, "In development": 36, Prototype: 265 };
+  const statusHue = (s) => (s in STATUS_HUE ? STATUS_HUE[s] : 200);
+  const platformsOf = (p) => (Array.isArray(p.platforms) ? p.platforms.filter(Boolean) : []);
+  const PLATFORM_ICON = {
+    Mobile: '<rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><path d="M7 12.5h2"/>',
+    PC: '<rect x="1.5" y="2.5" width="13" height="8.5" rx="1"/><path d="M5.5 14h5M8 11v3"/>',
+    Mac: '<rect x="2.5" y="2.5" width="11" height="7.5" rx="1"/><path d="M1 13h14"/>',
+    Web: '<circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c2 2 2.6 4 2.6 6.5S10 12.5 8 14.5M8 1.5C6 3.5 5.4 5.5 5.4 8S6 12.5 8 14.5"/>',
+    Console: '<path d="M4.5 4.5h7a3.5 3.5 0 0 1 3.4 4.3l-.6 2.6a1.8 1.8 0 0 1-3.1.8L9.8 10.5H6.2l-1.4 1.7a1.8 1.8 0 0 1-3.1-.8l-.6-2.6a3.5 3.5 0 0 1 3.4-4.3Z"/><path d="M4.5 7v2M3.5 8h2"/>',
+    VR: '<path d="M2 5.5h12a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-2.6L8.8 9.6a1 1 0 0 0-1.6 0L5.6 11.5H3A1.5 1.5 0 0 1 1.5 10V6a.5.5 0 0 1 .5-.5Z"/>',
+  };
+  const platformIcon = (name) =>
+    `<svg viewBox="0 0 16 16" aria-hidden="true">${PLATFORM_ICON[name] || '<rect x="2.5" y="2.5" width="11" height="11" rx="2"/>'}</svg>`;
 
   // Group projects by creator: same email OR same normalized full name end up together.
   function groupProjects(list) {
@@ -111,7 +126,7 @@
     el.tabIndex = 0;
     el.setAttribute("role", "button");
     el.setAttribute("aria-label", `${p.title} by ${p.creator_name}`);
-    el.style.setProperty("--h", hue(p.category));
+    el.style.setProperty("--h", statusHue(p.status));
     const a = document.createElement("span");
     a.className = "art";
     a.style.background = art(p.title + p.id);
@@ -143,28 +158,49 @@
   });
 
   // ---------- filters ----------
-  function categories() {
+  function tally(values) {
     const counts = new Map();
-    for (const p of state.projects) {
-      const c = p.category || "Other";
-      counts.set(c, (counts.get(c) || 0) + 1);
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    for (const v of values) if (v) counts.set(v, (counts.get(v) || 0) + 1);
+    return counts;
   }
+  // Configured values first (in config order), then any custom ones by popularity.
+  function ordered(counts, preset) {
+    const pre = (preset || []).filter((v) => counts.has(v)).map((v) => [v, counts.get(v)]);
+    const extra = [...counts.entries()].filter(([v]) => !(preset || []).includes(v)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return pre.concat(extra);
+  }
+  const facets = () => ({
+    status: ordered(tally(state.projects.map((p) => p.status)), cfg.statuses),
+    platform: ordered(tally(state.projects.flatMap(platformsOf)), cfg.platforms),
+    genre: ordered(tally(state.projects.map((p) => p.genre)), cfg.genres),
+  });
+  const genres = () => facets().genre.map(([g]) => g);
 
   function renderChips() {
-    const cats = categories();
-    if (state.cat !== "all" && !cats.some(([c]) => c === state.cat)) state.cat = "all";
-    const chip = (val, label, n, h) =>
-      `<button type="button" class="chip${state.cat === val ? " on" : ""}" data-cat="${esc(val)}" aria-pressed="${state.cat === val}">` +
-      (h != null ? `<i style="--h:${h}"></i>` : "") + `${esc(label)}<small>${n}</small></button>`;
-    $("#chips").innerHTML = chip("all", "All", state.projects.length) + cats.map(([c, n]) => chip(c, c, n, hue(c))).join("");
+    const f = facets();
+    for (const k of ["status", "platform", "genre"]) {
+      if (state[k] && !f[k].some(([v]) => v === state[k])) state[k] = null;
+    }
+    const none = !state.status && !state.platform && !state.genre;
+    const chip = (facet, val, n, mark) => {
+      const on = facet === "all" ? none : state[facet] === val;
+      return `<button type="button" class="chip${on ? " on" : ""}" data-facet="${facet}" data-val="${esc(val)}" aria-pressed="${on}">${mark || ""}${esc(val)}<small>${n}</small></button>`;
+    };
+    const group = (facet, list, mark) =>
+      list.length ? '<span class="chip-sep" aria-hidden="true"></span>' + list.map(([v, n]) => chip(facet, v, n, mark(v))).join("") : "";
+    $("#chips").innerHTML =
+      chip("all", "All", state.projects.length) +
+      group("status", f.status, (v) => `<i style="--h:${statusHue(v)}"></i>`) +
+      group("platform", f.platform, (v) => platformIcon(v)) +
+      group("genre", f.genre, (v) => `<i class="sq" style="--h:${hue(v)}"></i>`);
   }
 
   $("#chips").addEventListener("click", (e) => {
     const b = e.target.closest(".chip");
     if (!b) return;
-    state.cat = b.dataset.cat;
+    const { facet, val } = b.dataset;
+    if (facet === "all") state.status = state.platform = state.genre = null;
+    else state[facet] = state[facet] === val ? null : val;
     renderChips();
     applyFilter();
   });
@@ -176,11 +212,13 @@
   });
 
   function applyFilter() {
-    const { cat, q } = state;
-    if (cat === "all" && !q) return cloud.setFilter(null);
+    const { status, platform, genre, q } = state;
+    if (!status && !platform && !genre && !q) return cloud.setFilter(null);
     cloud.setFilter((p) => {
-      if (cat !== "all" && (p.category || "Other") !== cat) return false;
-      if (q) return normName([p.title, p.description, p.creator_name, p.category].join(" ")).includes(q);
+      if (status && p.status !== status) return false;
+      if (platform && !platformsOf(p).includes(platform)) return false;
+      if (genre && p.genre !== genre) return false;
+      if (q) return normName([p.title, p.description, p.creator_name, p.genre, p.status, ...platformsOf(p)].join(" ")).includes(q);
       return true;
     });
   }
@@ -188,9 +226,19 @@
   function renderStats() {
     const n = state.projects.length, g = state.groups.length;
     $("#stats").innerHTML =
-      `<b>${n}</b> project${n === 1 ? "" : "s"} · <b>${g}</b> builder${g === 1 ? "" : "s"}` +
-      (Store.mode === "demo" ? ` <span class="pill" title="Projects are saved in this browser only. Connect Supabase in config.js to go live.">demo</span>` : "");
+      `<b>${n}</b> game${n === 1 ? "" : "s"} · <b>${g}</b> dev${g === 1 ? "" : "s"}` +
+      (Store.mode === "local" ? ` <span class="pill" title="Games are saved in this browser only. Connect Supabase in config.js so everyone shares one cloud.">local</span>` : "");
     $("#empty").hidden = n > 0;
+  }
+
+  function renderCredit() {
+    const c = cfg.credit;
+    if (!c || !c.name) return;
+    const li = safeLinkedIn(c.linkedin);
+    const name = li
+      ? `<a href="${esc(li)}" target="_blank" rel="noopener noreferrer">${esc(c.name)}<svg viewBox="0 0 16 16" aria-label="LinkedIn" class="fill"><path d="M3.6 5.8h-2v8.6h2V5.8ZM2.6 1.6a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Zm11.8 7.6c0-2.3-1.2-3.5-3-3.5-1.3 0-2 .7-2.3 1.2v-1h-2v8.6h2V10c0-1.2.3-2.3 1.7-2.3s1.6 1.3 1.6 2.4v4.3h2V9.2Z"/></svg></a>`
+      : `<b>${esc(c.name)}</b>`;
+    $("#credit").innerHTML = `Created by ${name}${c.event ? ` for the ${esc(c.event)}` : ""}`;
   }
 
   function refreshUI() {
@@ -208,7 +256,8 @@
     if (!kid) return hideTip();
     const p = state.byId.get(kid.dataset.pid);
     if (!p) return hideTip();
-    tip.innerHTML = `<b>${esc(p.title)}</b><span>${esc(p.description)}</span>`;
+    const meta = [p.status, p.genre, platformsOf(p).join(", ")].filter(Boolean).join(" · ");
+    tip.innerHTML = `<b>${esc(p.title)}</b><span>${esc(p.description)}</span>${meta ? `<em style="--h:${statusHue(p.status)}">${esc(meta)}</em>` : ""}`;
     tip.hidden = false;
   });
   $("#stage").addEventListener("pointermove", (e) => {
@@ -246,7 +295,7 @@
 
   const thumbHTML = (p, cls) => {
     const src = safeImg(p.thumbnail);
-    return `<div class="${cls}" style="--h:${hue(p.category)}"><span class="art" style="background:${art(p.title + p.id)}"><span>${esc(initials(p.title))}</span></span>` +
+    return `<div class="${cls}" style="--h:${statusHue(p.status)}"><span class="art" style="background:${art(p.title + p.id)}"><span>${esc(initials(p.title))}</span></span>` +
       (src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">` : "") + `</div>`;
   };
   const linkedinBtn = (url) =>
@@ -259,7 +308,7 @@
   function creatorBlock(g, current) {
     return `<div class="creator">
       <div class="avatar" style="background:${art(g.name)}">${esc(initials(g.name))}</div>
-      <div><b>${esc(g.name)}</b><small>${g.projects.length} project${g.projects.length === 1 ? "" : "s"} in the cloud</small></div>
+      <div><b>${esc(g.name)}</b><small>${g.projects.length} game${g.projects.length === 1 ? "" : "s"} in the cloud</small></div>
       ${current ? `<a href="#" class="link-sm" data-group="${esc(g.id)}">View all</a>` : ""}
     </div>${linkedinBtn(g.linkedin)}`;
   }
@@ -272,11 +321,15 @@
     const others = g ? g.projects.filter((x) => x.id !== id).reverse() : [];
     openDrawer(`
       ${thumbHTML(p, "hero")}
-      <span class="cat" style="--h:${hue(p.category)}"><i></i>${esc(p.category || "Other")}</span>
+      <div class="tags">
+        ${p.status ? `<span class="cat" style="--h:${statusHue(p.status)}"><i></i>${esc(p.status)}</span>` : ""}
+        ${p.genre ? `<span class="cat" style="--h:${hue(p.genre)}"><i class="sq"></i>${esc(p.genre)}</span>` : ""}
+        ${platformsOf(p).map((x) => `<span class="cat plat">${platformIcon(x)}${esc(x)}</span>`).join("")}
+      </div>
       <h2>${esc(p.title)}</h2>
       <p class="desc">${esc(p.description)}</p>
       <div class="row">
-        ${url ? `<a class="btn btn-primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open project
+        ${url ? `<a class="btn btn-primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${p.status === "Released" ? "Play" : "Open"} game
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>` : ""}
         <span class="when">added ${esc(ago(p.created_at))}</span>
       </div>
@@ -291,9 +344,9 @@
     if (!g) return;
     if (g.projects.length === 1) return openProject(g.projects[0].id);
     openDrawer(`
-      <span class="eyebrow">Builder</span>
+      <span class="eyebrow">Game dev</span>
       ${creatorBlock(g, false)}
-      <h3>${g.projects.length} projects</h3>
+      <h3>${g.projects.length} games</h3>
       <div class="minis">${[...g.projects].reverse().map(card).join("")}</div>
     `);
   }
@@ -311,21 +364,31 @@
   // ---------- add form ----------
   const dlg = $("#addDialog"), form = $("#addForm");
   const thumb = { mode: "link", link: null, upload: null, reqId: 0 };
-  let chosenCat = null;
+  const pick = { status: null, platforms: new Set(), genre: null };
 
-  function renderCatPick() {
-    const set = new Set([...(cfg.defaultCategories || []), ...categories().map(([c]) => c)]);
-    $("#catPick").innerHTML =
-      [...set].map((c) => `<button type="button" role="radio" class="chip sm${chosenCat === c ? " on" : ""}" aria-checked="${chosenCat === c}" data-cat="${esc(c)}"><i style="--h:${hue(c)}"></i>${esc(c)}</button>`).join("") +
-      `<button type="button" role="radio" class="chip sm new${chosenCat === "__new" ? " on" : ""}" aria-checked="${chosenCat === "__new"}" data-cat="__new">+ New</button>`;
-    $("#newCategory").hidden = chosenCat !== "__new";
+  const pickChip = (kind, val, on, mark, role = "radio") =>
+    `<button type="button" role="${role}" class="chip sm${on ? " on" : ""}" aria-${role === "radio" ? "checked" : "pressed"}="${on}" data-kind="${kind}" data-val="${esc(val)}">${mark || ""}${esc(val)}</button>`;
+
+  function renderPickers() {
+    $("#statusPick").innerHTML = (cfg.statuses || []).map((v) =>
+      pickChip("status", v, pick.status === v, `<i style="--h:${statusHue(v)}"></i>`)).join("");
+    const plats = [...new Set([...(cfg.platforms || []), ...state.projects.flatMap(platformsOf)])];
+    $("#platformPick").innerHTML = plats.map((v) =>
+      pickChip("platform", v, pick.platforms.has(v), platformIcon(v), "checkbox")).join("");
+    const gs = [...new Set([...(cfg.genres || []), ...genres()])];
+    $("#genrePick").innerHTML = gs.map((v) =>
+      pickChip("genre", v, pick.genre === v, `<i class="sq" style="--h:${hue(v)}"></i>`)).join("") +
+      pickChip("genre", "+ New", pick.genre === "__new", "").replace('data-val="+ New"', 'data-val="__new"').replace('class="chip sm', 'class="chip sm new');
+    $("#newGenre").hidden = pick.genre !== "__new";
   }
-  $("#catPick").addEventListener("click", (e) => {
-    const b = e.target.closest(".chip");
+  form.addEventListener("click", (e) => {
+    const b = e.target.closest(".cat-pick .chip");
     if (!b) return;
-    chosenCat = chosenCat === b.dataset.cat ? null : b.dataset.cat;
-    renderCatPick();
-    if (chosenCat === "__new") $("#newCategory").focus();
+    const { kind, val } = b.dataset;
+    if (kind === "platform") pick.platforms.has(val) ? pick.platforms.delete(val) : pick.platforms.add(val);
+    else pick[kind] = pick[kind] === val ? null : val;
+    renderPickers();
+    if (kind === "genre" && pick.genre === "__new") $("#newGenre").focus();
   });
 
   function setPreview() {
@@ -350,21 +413,50 @@
   });
   const status = (t) => { $("#thumbStatus").textContent = t || ""; };
 
-  // Fetch the link's preview (og:image), falling back to a screenshot.
+  // itch.io exposes /data.json (cover, title, tags) with CORS enabled.
+  async function itchInfo(url) {
+    const u = new URL(url);
+    if (!/\.itch\.io$/i.test(u.hostname) || u.pathname.split("/").filter(Boolean).length !== 1) return null;
+    try {
+      const r = await fetch(u.origin + u.pathname.replace(/\/$/, "") + "/data.json");
+      return r.ok ? await r.json() : null;
+    } catch (e) { return null; }
+  }
+
+  // Find a cover for the link, like WhatsApp's link previews:
+  // itch.io directly, then our own /api/preview (Vercel), then microlink as a fallback.
   async function resolveThumb(url) {
+    const itch = await itchInfo(url);
+    if (itch && safeImg(itch.cover_image)) return { img: itch.cover_image, title: itch.title, tags: itch.tags || [] };
+    try {
+      const r = await fetch("api/preview?url=" + encodeURIComponent(url));
+      const j = r.ok && /json/.test(r.headers.get("content-type") || "") ? await r.json() : null;
+      if (j && safeImg(j.image)) return { img: j.image, title: j.title, description: j.description };
+    } catch (e) {}
+    const steam = url.match(/^https?:\/\/store\.steampowered\.com\/app\/(\d+)/i);
+    if (steam) return { img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${steam[1]}/header.jpg` };
     const base = "https://api.microlink.io/?url=" + encodeURIComponent(url);
     try {
       const j = await (await fetch(base)).json();
-      const d = j && j.data;
-      const img = d && ((d.image && d.image.url) || (d.logo && d.logo.width >= 128 && d.logo.url));
-      if (img && safeImg(img)) return img;
+      if (!j || j.status !== "success") return null; // blocked or unreachable: don't screenshot a bot wall
+      const d = j.data || {};
+      const img = (d.image && d.image.url) || (d.logo && d.logo.width >= 128 && d.logo.url);
+      if (img && safeImg(img)) return { img, title: d.title, description: d.description };
       const s = await (await fetch(base + "&screenshot=true&meta=false")).json();
-      const shot = s && s.data && s.data.screenshot && s.data.screenshot.url;
-      return safeImg(shot);
+      return { img: safeImg(s && s.data && s.data.screenshot && s.data.screenshot.url), title: d.title, description: d.description };
     } catch (e) {
       return null;
     }
   }
+
+  // Store pages add noise like "Save 75% on X on Steam" or "X by Studio"; keep it short.
+  const cleanTitle = (t) =>
+    String(t || "").replace(/^Save \d+% on /i, "").replace(/ on Steam$/i, "").replace(/ (by|[-–|·]) .*$/, "").trim().slice(0, 60);
+  const clip = (t, n) => {
+    t = String(t || "").replace(/\s+/g, " ").trim();
+    if (t.length <= n) return t;
+    return t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…";
+  };
 
   let linkTimer;
   form.url.addEventListener("input", () => {
@@ -378,9 +470,26 @@
     const id = ++thumb.reqId;
     thumb.link = null;
     if (thumb.mode === "link") { status("Fetching preview…"); setPreview(); }
-    const src = await resolveThumb(url);
+    const info = await resolveThumb(url);
     if (id !== thumb.reqId) return;
+    const src = (info && info.img) || null;
     thumb.link = src;
+    // Pre-fill what the link tells us, only where the person hasn't typed yet.
+    if (info && info.title && !form.title.value.trim()) {
+      form.title.value = cleanTitle(info.title);
+      setPreview();
+    }
+    if (info && info.description && !form.description.value.trim()) {
+      form.description.value = clip(info.description, 140);
+      form.description.dispatchEvent(new Event("input"));
+    }
+    if (info && info.tags) {
+      if (!pick.genre) {
+        const tags = info.tags.map((t) => String(t).toLowerCase().replace(/-/g, " "));
+        const g = (cfg.genres || []).find((x) => tags.includes(x.toLowerCase()));
+        if (g) { pick.genre = g; renderPickers(); }
+      }
+    }
     if (thumb.mode === "link") { status(src ? "" : "No preview found"); setPreview(); }
   }
 
@@ -440,8 +549,10 @@
   function openForm() {
     form.reset();
     Object.assign(thumb, { mode: "link", link: null, upload: null, lastUrl: null, reqId: thumb.reqId + 1 });
-    chosenCat = null;
     const me = load(ME_KEY) || {};
+    pick.status = null;
+    pick.genre = null;
+    pick.platforms = new Set(me.platforms || []);
     form.creator_name.value = me.name || "";
     form.email.value = me.email || "";
     form.linkedin.value = me.linkedin || "";
@@ -450,7 +561,7 @@
     $("#wordCount").classList.remove("ok");
     $("#thumbHint").textContent = "We grab the preview image from your link automatically.";
     status("");
-    renderCatPick();
+    renderPickers();
     setPreview();
     closeDrawer();
     dlg.showModal();
@@ -474,20 +585,20 @@
     const email = form.email.value.trim();
     const liRaw = form.linkedin.value.trim();
     const linkedin = liRaw ? safeLinkedIn(liRaw) : null;
-    let category = chosenCat === "__new" ? form.newCategory.value.trim() : chosenCat;
+    let genre = pick.genre === "__new" ? form.newGenre.value.trim().replace(/\s+/g, " ") : pick.genre;
 
     if (!title) return err("Give your project a title.", form.title);
     if (words(description) < 2) return err("The description needs at least 2 words.", form.description);
     if (!url) return err("That link doesn't look right.", form.url);
-    if (chosenCat === "__new" && !category) return err("Name your new category, or pick one.", form.newCategory);
+    if (!pick.status) return err("Pick a release status.", $("#statusPick .chip"));
+    if (pick.genre === "__new" && !genre) return err("Name the new genre, or pick one.", form.newGenre);
     if (!name) return err("Add your full name.", form.creator_name);
     if (email && !form.email.checkValidity()) return err("That email doesn't look right.", form.email);
     if (liRaw && !linkedin) return err("Use a linkedin.com link for LinkedIn.", form.linkedin);
-    if (category) {
-      // Reuse an existing category if only the casing differs.
-      const match = categories().map(([c]) => c).concat(cfg.defaultCategories || [])
-        .find((c) => c.toLowerCase() === category.toLowerCase());
-      category = match || category;
+    if (genre) {
+      // Reuse an existing genre if only the casing differs.
+      const match = (cfg.genres || []).concat(genres()).find((g) => g.toLowerCase() === genre.toLowerCase());
+      genre = match || genre;
     }
 
     const btn = $("#submitBtn");
@@ -499,14 +610,16 @@
       const row = await Store.add({
         title,
         description,
-        category: category || "Other",
+        status: pick.status,
+        platforms: (cfg.platforms || []).filter((x) => pick.platforms.has(x)).concat([...pick.platforms].filter((x) => !(cfg.platforms || []).includes(x))),
+        genre: genre || null,
         creator_name: name,
         creator_key: await emailKey(email),
         linkedin,
         url,
         thumbnail: (thumb.mode === "upload" ? thumb.upload : thumb.link) || null,
       });
-      save(ME_KEY, { name, email, linkedin: liRaw });
+      save(ME_KEY, { name, email, linkedin: liRaw, platforms: [...pick.platforms] });
       dlg.close();
       addAndDrop([row]);
     } catch (ex) {
@@ -537,6 +650,7 @@
       toast(e.message);
     }
     rebuild();
+    renderCredit();
     cloud.sync(state.groups);
     refreshUI();
     if (Store.mode === "live") {

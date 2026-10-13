@@ -1,5 +1,5 @@
 -- Run this once in Supabase → SQL Editor.
--- Anyone can read and add projects; nobody can edit or delete through the public key.
+-- Anyone can read and add games; nobody can edit or delete through the public key.
 
 create table if not exists public.projects (
   id            uuid primary key default gen_random_uuid(),
@@ -9,7 +9,9 @@ create table if not exists public.projects (
                   char_length(description) between 3 and 140
                   and array_length(regexp_split_to_array(btrim(description), '\s+'), 1) >= 2
                 ),
-  category      text not null default 'Other' check (char_length(category) between 1 and 24),
+  status        text not null check (status in ('Released', 'In development', 'Prototype')),
+  platforms     text[] not null default '{}' check (cardinality(platforms) <= 8),
+  genre         text check (genre is null or char_length(genre) between 1 and 24),
   creator_name  text not null check (char_length(creator_name) between 1 and 60),
   -- SHA-256 of the email (hashed in the browser). The raw email is never stored.
   creator_key   text check (creator_key is null or creator_key ~ '^[a-z0-9]{8,64}$'),

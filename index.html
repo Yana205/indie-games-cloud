@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Community Projects Cloud</title>
-  <meta name="description" content="A living cloud of projects built by the Claude community. Drop yours in.">
-  <meta property="og:title" content="Community Projects Cloud">
-  <meta property="og:description" content="A living cloud of projects built by the Claude community. Drop yours in.">
+  <title>Indie Games Cloud</title>
+  <meta name="description" content="Games made by the Claude Code Community Meetup indie game developers. Drop yours in.">
+  <meta property="og:title" content="Indie Games Cloud · Claude Code Community Meetup">
+  <meta property="og:description" content="Games made by the Claude Code Community Meetup indie game developers. Drop yours in.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='18' r='9' fill='%23d97757'/%3E%3Ccircle cx='23' cy='11' r='6' fill='%23e8a07f'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23f3c9b3'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,16 +17,16 @@
   <main id="stage" class="stage" aria-label="Project cloud"></main>
 
   <header class="top" id="top">
-    <a class="brand" href="./" aria-label="Community Projects Cloud home">
+    <a class="brand" href="./" aria-label="Indie Games Cloud home">
       <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="18" r="9"/><circle cx="23" cy="11" r="6"/><circle cx="24" cy="24" r="4"/></svg>
       <span>
-        <small>Claude community</small>
-        <strong>projects <em>cloud</em></strong>
+        <small>Claude Code Meetup · Indie Game Devs</small>
+        <strong>games <em>cloud</em></strong>
       </span>
     </a>
     <button class="btn btn-primary" id="addBtn" type="button">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg>
-      Drop a project
+      Drop<span class="long"> your game</span>
     </button>
   </header>
 
@@ -36,21 +36,22 @@
   </div>
 
   <footer class="bottom" id="bottom">
-    <nav class="chips" id="chips" aria-label="Filter by category"></nav>
+    <nav class="chips" id="chips" aria-label="Filter games"></nav>
     <div class="tools">
       <label class="search">
         <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3.5 3.5"/></svg>
-        <input id="search" type="search" placeholder="Search projects or people" autocomplete="off">
+        <input id="search" type="search" placeholder="Search games or devs" autocomplete="off">
       </label>
       <span class="stats" id="stats"></span>
     </div>
+    <p class="credit" id="credit"></p>
   </footer>
 
   <div class="tip" id="tip" role="tooltip" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="scrim" id="scrim"></div>
-  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Project details">
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Game details">
     <button class="icon-btn drawer-close" id="drawerClose" type="button" aria-label="Close">
       <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg>
     </button>
@@ -61,8 +62,8 @@
     <form id="addForm" novalidate>
       <div class="modal-head">
         <div>
-          <h2 id="addTitle">Drop a project</h2>
-          <p>It falls into the cloud. Use the same name or email every time and your projects gather into one bubble.</p>
+          <h2 id="addTitle">Drop your game</h2>
+          <p>It falls into the cloud. Use the same name or email every time and your games gather into one bubble.</p>
         </div>
         <button class="icon-btn" type="button" data-close aria-label="Close">
           <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg>
@@ -81,32 +82,42 @@
             <span class="field-label">Thumbnail</span>
             <div class="seg" role="radiogroup" aria-label="Thumbnail source">
               <label><input type="radio" name="thumbMode" value="link" checked><span>From link</span></label>
-              <label><input type="radio" name="thumbMode" value="upload"><span>Upload photo</span></label>
+              <label><input type="radio" name="thumbMode" value="upload"><span>Upload</span></label>
             </div>
             <input type="file" id="thumbFile" accept="image/*" hidden>
-            <p class="hint" id="thumbHint">We grab the preview image from your link automatically.</p>
+            <p class="hint" id="thumbHint">We grab the cover from your itch.io, Steam or store page automatically.</p>
           </div>
         </div>
 
         <label class="field">
-          <span class="field-label">Project title <b>*</b></span>
-          <input name="title" required maxlength="60" placeholder="e.g. Inbox Zero Agent">
+          <span class="field-label">Game title <b>*</b></span>
+          <input name="title" required maxlength="60" placeholder="e.g. Pixel Dungeon">
         </label>
 
         <label class="field">
           <span class="field-label">Short description <b>*</b> <small id="wordCount">at least 2 words</small></span>
-          <input name="description" required maxlength="140" placeholder="What does it do, in a line?">
+          <input name="description" required maxlength="140" placeholder="The game in one line">
         </label>
 
         <label class="field">
-          <span class="field-label">Link <b>*</b></span>
-          <input name="url" required inputmode="url" autocomplete="url" placeholder="https://your-project.com">
+          <span class="field-label">Link <b>*</b> <small>itch.io, Steam, App Store, Google Play, or your site</small></span>
+          <input name="url" required inputmode="url" autocomplete="url" placeholder="https://you.itch.io/your-game">
         </label>
 
         <div class="field">
-          <span class="field-label">Category</span>
-          <div class="cat-pick" id="catPick" role="radiogroup" aria-label="Category"></div>
-          <input name="newCategory" id="newCategory" maxlength="24" placeholder="Name your category" hidden>
+          <span class="field-label">Release status <b>*</b></span>
+          <div class="cat-pick" id="statusPick" role="radiogroup" aria-label="Release status"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Platforms <small>pick all that apply</small></span>
+          <div class="cat-pick" id="platformPick" role="group" aria-label="Platforms"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Genre</span>
+          <div class="cat-pick" id="genrePick" role="radiogroup" aria-label="Genre"></div>
+          <input name="newGenre" id="newGenre" maxlength="24" placeholder="Name the genre" hidden>
         </div>
 
         <fieldset class="who">
@@ -116,7 +127,7 @@
             <input name="creator_name" required maxlength="60" autocomplete="name">
           </label>
           <label class="field">
-            <span class="field-label">Email <small>private · only used to group your projects</small></span>
+            <span class="field-label">Email <small>private · only used to group your games</small></span>
             <input name="email" type="email" maxlength="120" autocomplete="email">
           </label>
           <label class="field">
