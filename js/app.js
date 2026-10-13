@@ -716,6 +716,7 @@
       state.projects = [];
       toast(e.message);
     }
+    showWelcome();
     rebuild();
     renderCredit();
     cloud.sync(state.groups);
@@ -729,6 +730,29 @@
       }, Math.max(5, cfg.pollSeconds || 20) * 1000);
     }
   }
+
+  // ---------- first visit ----------
+  const WELCOME_KEY = "ccp.welcomed.v1";
+  function showWelcome() {
+    if (load(WELCOME_KEY) || load(ME_KEY)) return; // seen it, or already dropped a game
+    setTimeout(() => {
+      if (dlg.open || drawerOpen()) return;
+      $("#welcome").hidden = false;
+      $("#addBtn").classList.add("beckon");
+    }, 1400);
+  }
+  function hideWelcome() {
+    if ($("#welcome").hidden && !$("#addBtn").classList.contains("beckon")) return;
+    save(WELCOME_KEY, 1);
+    $("#addBtn").classList.remove("beckon");
+    const w = $("#welcome");
+    w.classList.add("leaving");
+    setTimeout(() => { w.hidden = true; w.classList.remove("leaving"); }, 300);
+  }
+  $("#welcomeDrop").addEventListener("click", () => { hideWelcome(); openForm(); });
+  $("#welcomeSkip").addEventListener("click", hideWelcome);
+  $("#addBtn").addEventListener("click", hideWelcome);
+  $("#stage").addEventListener("pointerdown", () => { if (!$("#welcome").hidden) hideWelcome(); });
 
   window.CCP = { cloud, state, toast };
   boot();

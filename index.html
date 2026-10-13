@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261013-4">
+  <link rel="stylesheet" href="styles.css?v=20261013-6">
 </head>
 <body>
   <main id="stage" class="stage" aria-label="Project cloud"></main>
@@ -30,6 +30,20 @@
       Drop<span class="long"> your game</span>
     </button>
   </header>
+
+  <div class="welcome" id="welcome" role="dialog" aria-labelledby="welcomeTitle" hidden>
+    <i class="welcome-arrow" aria-hidden="true"></i>
+    <h2 id="welcomeTitle">Welcome to the <em>games cloud</em></h2>
+    <p>Every bubble is a game made by someone at the meetup. Tap one to see it and play.</p>
+    <p class="welcome-strong">Made a game? Drop it in and watch it fall into the cloud.</p>
+    <div class="welcome-actions">
+      <button class="btn btn-primary" type="button" id="welcomeDrop">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c2.6 3.2 4.5 5.8 4.5 8a4.5 4.5 0 0 1-9 0c0-2.2 1.9-4.8 4.5-8Z"/></svg>
+        Drop my game
+      </button>
+      <button class="btn btn-ghost" type="button" id="welcomeSkip">Just looking</button>
+    </div>
+  </div>
 
   <div class="empty" id="empty" hidden>
     <p>The cloud is empty.</p>
@@ -148,9 +162,9 @@
   </dialog>
 
   <!-- Bump ?v= on every release so phones fetch fresh files instead of cached ones. -->
-  <script src="config.js?v=20261013-4"></script>
-  <script src="js/store.js?v=20261013-4"></script>
-  <script src="js/cloud.js?v=20261013-4"></script>
-  <script src="js/app.js?v=20261013-4"></script>
+  <script src="config.js?v=20261013-6"></script>
+  <script src="js/store.js?v=20261013-6"></script>
+  <script src="js/cloud.js?v=20261013-6"></script>
+  <script src="js/app.js?v=20261013-6"></script>
 </body>
 </html>
